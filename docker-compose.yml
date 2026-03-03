@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  server:
+    build: 
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: car-app-server
+    ports:
+      - "3000:3000"
+    environment:
+      DB_PATH: /app/data/car.db
+      JWT_SECRET: car-app-secret-key
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./data:/app/data
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: car-app-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
