@@ -57,7 +57,7 @@ const handleLogin = async () => {
 }
 
 const goRegister = () => {
-  uni.showToast({ title: '跳转注册页', icon: 'none' })
+  uni.redirectTo({ url: '/pages/register/register' })
 }
 </script>
 

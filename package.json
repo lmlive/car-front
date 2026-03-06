@@ -16,6 +16,9 @@
     "@dcloudio/types": "^3.3.2",
     "@dcloudio/uni-cli-shared": "3.0.0-4020920240930001",
     "@dcloudio/vite-plugin-uni": "3.0.0-4020920240930001",
+    "@tabler/icons": "^3.39.0",
+    "canvas": "^3.2.1",
+    "sharp": "^0.34.5",
     "vite": "^5.2.8"
   }
 }
