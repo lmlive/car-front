@@ -1,44 +1,41 @@
 <template>
   <view class="app-container">
-    <view v-if="!hasToken">
-      <LoginPage @success="onLoginSuccess" />
-    </view>
-    <view v-else>
-      <TabBar :current="currentTab" @change="onTabChange">
-        <TabBarItem>
-          <view slot="icon">🚗</view>
-          <view slot="label">车辆</view>
-        </TabBarItem>
-        <TabBarItem>
-          <view slot="icon">🔧</view>
-          <view slot="label">诊断</view>
-        </TabBarItem>
-        <TabBarItem>
-          <view slot="icon">👤</view>
-          <view slot="label">我的</view>
-        </TabBarItem>
-      </TabBar>
-    </view>
+    <slot></slot>
+    <CustomTabBar :current="currentTab" />
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import LoginPage from './pages/login.vue'
-import TabBar from './components/TabBar.vue'
-import TabBarItem from './components/TabBarItem.vue'
+import { ref, onMounted } from 'vue'
+import CustomTabBar from './components/CustomTabBar.vue'
 import { getToken } from './utils/auth'
 
-const hasToken = ref(!!getToken())
 const currentTab = ref(0)
 
- = () => {
-const onLoginSuccess  hasToken.value = true
-}
-
-const onTabChange = (index) => {
-  currentTab.value = index
-}
+onMounted(() => {
+  const hasToken = !!getToken()
+  if (!hasToken) {
+    uni.reLaunch({ url: '/pages/login/login' })
+    return
+  }
+  
+  try {
+    const pages = getCurrentPages()
+    if (pages && pages.length > 0) {
+      const currentPage = pages[pages.length - 1]
+      if (currentPage && currentPage.route) {
+        const path = '/' + currentPage.route
+        const tabPaths = ['/pages/index/index', '/pages/diagnose/diagnose', '/pages/profile/profile']
+        const index = tabPaths.indexOf(path)
+        if (index > -1) {
+          currentTab.value = index
+        }
+      }
+    }
+  } catch (e) {
+    console.log('获取页面信息失败', e)
+  }
+})
 </script>
 
 <style>
@@ -47,5 +44,6 @@ page {
 }
 .app-container {
   min-height: 100vh;
+  padding-bottom: 100px;
 }
 </style>

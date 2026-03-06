@@ -9,12 +9,12 @@
     <view class="form">
       <view class="form-item">
         <text class="label">手机号</text>
-        <input class="input" v-model="form.phone" placeholder="请输入手机号" type="number" maxlength="11" />
+        <input class="input" v-model="form.phone" placeholder="请输入手机号" type="number" maxlength="11" value="13812345678" />
       </view>
       
       <view class="form-item">
         <text class="label">密码</text>
-        <input class="input" v-model="form.password" placeholder="请输入密码" password />
+        <input class="input" v-model="form.password" placeholder="请输入密码" password value="123456" />
       </view>
       
       <view class="btn-group">
@@ -27,9 +27,9 @@
 
 <script setup>
 import { ref } from 'vue'
-import { post, setToken, setUser } from '../utils/auth'
+import { post, setToken, setUser } from '../../utils/auth'
 
-const form = ref({ phone: '', password: '' })
+const form = ref({ phone: '13812345678', password: '123456' })
 const loading = ref(false)
 
 const emit = defineEmits(['success'])
@@ -46,7 +46,9 @@ const handleLogin = async () => {
     setToken(res.access_token)
     setUser(res.user)
     uni.showToast({ title: '登录成功', icon: 'success' })
-    emit('success')
+    setTimeout(() => {
+      uni.reLaunch({ url: '/pages/index/index' })
+    }, 500)
   } catch (err) {
     uni.showToast({ title: err.message || '登录失败', icon: 'none' })
   } finally {

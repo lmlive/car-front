@@ -3,7 +3,43 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "智能车诊"
+        "navigationBarTitleText": "智能车诊",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/vehicles/vehicles",
+      "style": {
+        "navigationBarTitleText": "我的车辆"
+      }
+    },
+    {
+      "path": "pages/diagnose/diagnose",
+      "style": {
+        "navigationBarTitleText": "AI诊断",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "个人中心",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/vehicle/add/add",
+      "style": {
+        "navigationBarTitleText": "添加车辆",
+        "navigationStyle": "custom"
       }
     }
   ],
@@ -14,6 +50,7 @@
     "backgroundColor": "#F8F8F8"
   },
   "tabBar": {
+    "custom": true,
     "color": "#999",
     "selectedColor": "#667eea",
     "backgroundColor": "#fff",
@@ -21,8 +58,15 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "iconPath": "static/tab-home.png",
         "text": "首页"
+      },
+      {
+        "pagePath": "pages/diagnose/diagnose",
+        "text": "诊断"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
       }
     ]
   }
