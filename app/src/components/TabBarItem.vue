@@ -1,5 +1,0 @@
-<template>
-  <view>
-    <slot></slot>
-  </view>
-</template>
