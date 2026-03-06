@@ -159,7 +159,7 @@
 </template>
 
 <script setup>
-import { ref, onShow } from 'vue'
+import { ref } from 'vue'
 import { get, post, put, del } from '../../utils/auth'
 
 const vehicles = ref([])
