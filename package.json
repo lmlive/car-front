@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev:h5": "uni",
+    "dev:h5": "vite --port 48082 --host 0.0.0.0",
     "build:h5": "uni build"
   },
   "dependencies": {

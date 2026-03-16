@@ -42,9 +42,22 @@
       </button>
       
       <view class="register-link">
-        <text>还没有账号？</text>
-        <text class="link" @click="goRegister">立即注册</text>
+      <text>还没有账号？</text>
+      <text class="link" @click="goRegister">立即注册</text>
+    </view>
+
+    <view class="driver-entry">
+      <view class="divider">
+        <view class="divider-line"></view>
+        <text class="divider-text">司机入口</text>
+        <view class="divider-line"></view>
       </view>
+      <view class="driver-btn" @click="goDriverLogin">
+        <text>我是司机，点击登录</text>
+      </view>
+    </view>
+  </view>
+</template>
     </view>
   </view>
 </template>
@@ -104,6 +117,12 @@ const goForgotPwd = () => {
     url: '/pages/reset/reset'
   })
 }
+
+const goDriverLogin = () => {
+  uni.navigateTo({
+    url: '/pages/driver-login/driver-login'
+  })
+}
 </script>
 
 <style scoped>
@@ -124,4 +143,35 @@ const goForgotPwd = () => {
 .link { color: #007aff; margin-left: 5px; font-weight: 500; }
 .loading-icon { width: 20px; height: 20px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.driver-entry {
+  margin-top: 30px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: #eee;
+}
+
+.divider-text {
+  padding: 0 15px;
+  font-size: 13px;
+  color: #999;
+}
+
+.driver-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 15px;
+  border-radius: 25px;
+  text-align: center;
+  font-size: 14px;
+}
 </style>

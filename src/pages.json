@@ -48,6 +48,56 @@
         "navigationBarTitleText": "添加车辆",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/driver-login/driver-login",
+      "style": {
+        "navigationBarTitleText": "司机登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/driver-register/driver-register",
+      "style": {
+        "navigationBarTitleText": "司机注册",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/driver-reset/driver-reset",
+      "style": {
+        "navigationBarTitleText": "找回密码",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/driver-index/driver-index",
+      "style": {
+        "navigationBarTitleText": "司机中心",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/driver-vehicles/driver-vehicles",
+      "style": {
+        "navigationBarTitleText": "车辆管理",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/driver-certification/driver-certification",
+      "style": {
+        "navigationBarTitleText": "资质认证",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/driver-profile/driver-profile",
+      "style": {
+        "navigationBarTitleText": "个人中心",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {
