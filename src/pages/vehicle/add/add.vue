@@ -2,7 +2,7 @@
   <view class="page-container">
     <view class="page-header">
       <view class="back-btn" @click="goBack">
-        <text>←</text>
+        <text class="back-icon">←</text>
       </view>
       <text class="page-title">{{ isEdit ? '编辑车辆' : '添加车辆' }}</text>
       <view class="placeholder"></view>
@@ -10,321 +10,423 @@
 
     <scroll-view class="form-scroll" scroll-y>
       <view class="form-content">
-        <view class="section">
-          <view class="section-header">
-            <text class="section-icon">🚗</text>
-            <text class="section-title">车辆基本信息</text>
+        <up-form :model="form" ref="uForm" labelPosition="left" labelWidth="90">
+          <view class="section">
+            <view class="section-header">
+              <text class="section-icon">🚗</text>
+              <text class="section-title">车辆基本信息</text>
+            </view>
+            
+            <view class="form-card">
+              <up-form-item label="车牌号" prop="plateNumber" :borderBottom="true" required>
+                <up-input 
+                  v-model="form.plateNumber" 
+                  placeholder="如：京A12345"
+                  border="bottom"
+                  clearable
+                ></up-input>
+              </up-form-item>
+
+              <view class="form-row">
+                <up-form-item label="品牌" prop="brand" :borderBottom="true" class="flex-1" required>
+                  <view class="picker-input" @click="showBrandSheet = true">
+                    <up-input 
+                      v-model="form.brand" 
+                      placeholder="请选择品牌"
+                      border="bottom"
+                      readonly
+                    ></up-input>
+                    <view class="picker-arrow">▼</view>
+                  </view>
+                </up-form-item>
+
+                <up-form-item label="车型" prop="model" :borderBottom="true" class="flex-1" required>
+                  <up-input 
+                    v-model="form.model" 
+                    placeholder="如：秦PLUS"
+                    border="bottom"
+                    clearable
+                  ></up-input>
+                </up-form-item>
+              </view>
+
+              <view class="form-row">
+                <up-form-item label="颜色" prop="color" :borderBottom="true" class="flex-1">
+                  <view class="picker-input" @click="showColorSheet = true">
+                    <up-input 
+                      v-model="form.color" 
+                      placeholder="请选择颜色"
+                      border="bottom"
+                      readonly
+                    ></up-input>
+                    <view class="picker-arrow">▼</view>
+                  </view>
+                </up-form-item>
+
+                <up-form-item label="行驶里程" prop="mileage" :borderBottom="true" class="flex-1">
+                  <up-input 
+                    v-model="form.mileage" 
+                    placeholder="如：50000"
+                    border="bottom"
+                    type="number"
+                    clearable
+                  >
+                    <template #suffix>
+                      <text class="unit">km</text>
+                    </template>
+                  </up-input>
+                </up-form-item>
+              </view>
+
+              <up-form-item label="车架号" prop="vin" :borderBottom="true">
+                <up-input 
+                  v-model="form.vin" 
+                  placeholder="请输入17位车架号"
+                  border="bottom"
+                  maxlength="17"
+                  clearable
+                ></up-input>
+              </up-form-item>
+            </view>
           </view>
-          
-          <view class="form-card">
-            <view class="form-item" :class="{ error: errors.plateNumber }">
-              <text class="label">车牌号 <text class="required">*</text></text>
-              <input 
-                class="input" 
-                v-model="form.plateNumber" 
-                placeholder="如：京A12345"
-                @input="validateField('plateNumber')"
-              />
-              <text class="error-text" v-if="errors.plateNumber">{{ errors.plateNumber }}</text>
-            </view>
 
-            <view class="form-row">
-              <view class="form-item" :class="{ error: errors.brand }">
-                <text class="label">品牌 <text class="required">*</text></text>
-                <picker 
-                  mode="selector" 
-                  :range="brandList" 
-                  @change="onBrandChange"
+          <view class="section">
+            <view class="section-header">
+              <text class="section-icon">📷</text>
+              <text class="section-title">车辆照片</text>
+            </view>
+            
+            <view class="form-card">
+              <view class="photo-section">
+                <text class="photo-label">车辆照片（最多6张）</text>
+                <view class="photo-grid">
+                  <view 
+                    class="photo-item" 
+                    v-for="(img, index) in form.photos" 
+                    :key="index"
+                  >
+                    <image class="photo-img" :src="img" mode="aspectFill" />
+                    <view class="photo-cover">
+                      <view class="photo-remove" @click="removePhoto(index)">✕</view>
+                    </view>
+                  </view>
+                  <view class="photo-add" @click="choosePhoto" v-if="form.photos.length < 6">
+                    <text class="add-icon">📷</text>
+                    <text class="add-text">添加照片</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="section">
+            <view class="section-header">
+              <text class="section-icon">⚙️</text>
+              <text class="section-title">车辆参数</text>
+            </view>
+            
+            <view class="form-card">
+              <view class="form-row">
+                <up-form-item label="发动机" prop="engineModel" :borderBottom="true" class="flex-1">
+                  <up-input 
+                    v-model="form.engineModel" 
+                    placeholder="如：BYD476ZQA"
+                    border="bottom"
+                    clearable
+                  ></up-input>
+                </up-form-item>
+
+                <up-form-item label="排量" prop="displacement" :borderBottom="true" class="flex-1">
+                  <up-input 
+                    v-model="form.displacement" 
+                    placeholder="如：1.5"
+                    border="bottom"
+                    type="digit"
+                    clearable
+                  >
+                    <template #suffix>
+                      <text class="unit">L</text>
+                    </template>
+                  </up-input>
+                </up-form-item>
+              </view>
+
+              <view class="form-row">
+                <up-form-item label="最大功率" prop="maxPower" :borderBottom="true" class="flex-1">
+                  <up-input 
+                    v-model="form.maxPower" 
+                    placeholder="如：118"
+                    border="bottom"
+                    type="digit"
+                    clearable
+                  >
+                    <template #suffix>
+                      <text class="unit">kW</text>
+                    </template>
+                  </up-input>
+                </up-form-item>
+
+                <up-form-item label="最大扭矩" prop="maxTorque" :borderBottom="true" class="flex-1">
+                  <up-input 
+                    v-model="form.maxTorque" 
+                    placeholder="如：245"
+                    border="bottom"
+                    type="number"
+                    clearable
+                  >
+                    <template #suffix>
+                      <text class="unit">N·m</text>
+                    </template>
+                  </up-input>
+                </up-form-item>
+              </view>
+
+              <view class="form-row">
+                <up-form-item label="变速箱" prop="transmission" :borderBottom="true" class="flex-1">
+                  <view class="picker-input" @click="showTransmissionSheet = true">
+                    <up-input 
+                      v-model="form.transmission" 
+                      placeholder="请选择"
+                      border="bottom"
+                      readonly
+                    ></up-input>
+                    <view class="picker-arrow">▼</view>
+                  </view>
+                </up-form-item>
+
+                <up-form-item label="驱动方式" prop="driveMode" :borderBottom="true" class="flex-1">
+                  <view class="picker-input" @click="showDriveModeSheet = true">
+                    <up-input 
+                      v-model="form.driveMode" 
+                      placeholder="请选择"
+                      border="bottom"
+                      readonly
+                    ></up-input>
+                    <view class="picker-arrow">▼</view>
+                  </view>
+                </up-form-item>
+              </view>
+
+              <view class="form-row">
+                <up-form-item label="燃料类型" prop="fuelType" :borderBottom="true" class="flex-1">
+                  <view class="picker-input" @click="showFuelTypeSheet = true">
+                    <up-input 
+                      v-model="form.fuelType" 
+                      placeholder="请选择"
+                      border="bottom"
+                      readonly
+                    ></up-input>
+                    <view class="picker-arrow">▼</view>
+                  </view>
+                </up-form-item>
+
+                <up-form-item label="座位数" prop="seats" :borderBottom="true" class="flex-1">
+                  <view class="picker-input" @click="showSeatsSheet = true">
+                    <up-input 
+                      v-model="form.seats" 
+                      placeholder="请选择"
+                      border="bottom"
+                      readonly
+                    ></up-input>
+                    <view class="picker-arrow">▼</view>
+                  </view>
+                </up-form-item>
+              </view>
+
+              <view class="form-row">
+                <up-form-item label="年款" prop="year" :borderBottom="true" class="flex-1">
+                  <view class="picker-input" @click="showYearSheet = true">
+                    <up-input 
+                      v-model="form.year" 
+                      placeholder="请选择"
+                      border="bottom"
+                      readonly
+                    ></up-input>
+                    <view class="picker-arrow">▼</view>
+                  </view>
+                </up-form-item>
+
+                <up-form-item label="购车日期" prop="purchaseDate" :borderBottom="true" class="flex-1">
+                  <view class="picker-input" @click="showPurchaseDatePicker = true">
+                    <up-input 
+                      v-model="form.purchaseDate" 
+                      placeholder="请选择"
+                      border="bottom"
+                      readonly
+                    ></up-input>
+                    <view class="picker-arrow">▼</view>
+                  </view>
+                </up-form-item>
+              </view>
+
+              <up-form-item label="购车金额" prop="purchasePrice" :borderBottom="true">
+                <up-input 
+                  v-model="form.purchasePrice" 
+                  placeholder="如：15.98"
+                  border="bottom"
+                  type="digit"
+                  clearable
                 >
-                  <view class="picker" :class="{ placeholder: !form.brand }">
-                    {{ form.brand || '请选择品牌' }}
-                  </view>
-                </picker>
-                <text class="error-text" v-if="errors.brand">{{ errors.brand }}</text>
-              </view>
+                  <template #suffix>
+                    <text class="unit">万元</text>
+                  </template>
+                </up-input>
+              </up-form-item>
 
-              <view class="form-item" :class="{ error: errors.model }">
-                <text class="label">车型 <text class="required">*</text></text>
-                <input 
-                  class="input" 
-                  v-model="form.model" 
-                  placeholder="如：秦PLUS"
-                  @input="validateField('model')"
-                />
-                <text class="error-text" v-if="errors.model">{{ errors.model }}</text>
-              </view>
+              <up-form-item label="保险公司" prop="insuranceCompany" :borderBottom="true">
+                <up-input 
+                  v-model="form.insuranceCompany" 
+                  placeholder="如：中国人保"
+                  border="bottom"
+                  clearable
+                ></up-input>
+              </up-form-item>
+
+              <up-form-item label="保险到期日" prop="insuranceExpiry" :borderBottom="true">
+                <view class="picker-input" @click="showInsuranceExpiryPicker = true">
+                  <up-input 
+                    v-model="form.insuranceExpiry" 
+                    placeholder="请选择"
+                    border="bottom"
+                    readonly
+                  ></up-input>
+                  <view class="picker-arrow">▼</view>
+                </view>
+              </up-form-item>
             </view>
+          </view>
 
-            <view class="form-row">
-              <view class="form-item">
-                <text class="label">颜色</text>
-                <picker mode="selector" :range="colorList" @change="onColorChange">
-                  <view class="picker" :class="{ placeholder: !form.color }">
-                    {{ form.color || '请选择颜色' }}
-                  </view>
-                </picker>
-              </view>
-
-              <view class="form-item">
-                <text class="label">行驶里程(km)</text>
-                <input 
-                  class="input" 
-                  v-model="form.mileage" 
+          <view class="section">
+            <view class="section-header">
+              <text class="section-icon">🔧</text>
+              <text class="section-title">保养设置</text>
+            </view>
+            
+            <view class="form-card">
+              <up-form-item label="保养间隔" prop="maintenanceInterval" :borderBottom="true">
+                <up-input 
+                  v-model="form.maintenanceInterval" 
+                  placeholder="如：5000"
+                  border="bottom"
                   type="number"
-                  placeholder="如：50000"
-                />
-              </view>
-            </view>
-
-            <view class="form-item">
-              <text class="label">车架号(VIN)</text>
-              <input 
-                class="input vin-input" 
-                v-model="form.vin" 
-                placeholder="请输入17位车架号"
-                maxlength="17"
-                @input="validateField('vin')"
-              />
-              <text class="input-tip">17位字母数字组合，通常位于前挡风玻璃下方</text>
-              <text class="error-text" v-if="errors.vin">{{ errors.vin }}</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="section">
-          <view class="section-header">
-            <text class="section-icon">📷</text>
-            <text class="section-title">车辆照片</text>
-          </view>
-          
-          <view class="form-card">
-            <view class="photo-section">
-              <text class="photo-label">车辆照片（最多6张）</text>
-              <view class="photo-grid">
-                <view 
-                  class="photo-item" 
-                  v-for="(img, index) in form.photos" 
-                  :key="index"
+                  clearable
                 >
-                  <image class="photo-img" :src="img" mode="aspectFill" />
-                  <view class="photo-cover">
-                    <view class="photo-remove" @click="removePhoto(index)">✕</view>
-                  </view>
+                  <template #suffix>
+                    <text class="unit">km</text>
+                  </template>
+                </up-input>
+              </up-form-item>
+
+              <up-form-item label="下次保养里程" prop="nextMaintenanceMileage" :borderBottom="true">
+                <up-input 
+                  v-model="form.nextMaintenanceMileage" 
+                  placeholder="如：55000"
+                  border="bottom"
+                  type="number"
+                  clearable
+                >
+                  <template #suffix>
+                    <text class="unit">km</text>
+                  </template>
+                </up-input>
+              </up-form-item>
+
+              <up-form-item label="下次保养日期" prop="nextMaintenanceDate" :borderBottom="true">
+                <view class="picker-input" @click="showNextMaintenanceDatePicker = true">
+                  <up-input 
+                    v-model="form.nextMaintenanceDate" 
+                    placeholder="请选择"
+                    border="bottom"
+                    readonly
+                  ></up-input>
+                  <view class="picker-arrow">▼</view>
                 </view>
-                <view class="photo-add" @click="choosePhoto" v-if="form.photos.length < 6">
-                  <text class="add-icon">📷</text>
-                  <text class="add-text">添加照片</text>
-                </view>
-              </view>
-            </view>
-
-            <view class="photo-tips">
-              <text class="tip-title">建议上传：</text>
-              <text class="tip-item">• 车身外观正面照</text>
-              <text class="tip-item">• 车身外观侧面照</text>
-              <text class="tip-item">• 内饰照片</text>
-              <text class="tip-item">• 仪表盘照片</text>
+              </up-form-item>
             </view>
           </view>
-        </view>
 
-        <view class="section">
-          <view class="section-header">
-            <text class="section-icon">⚙️</text>
-            <text class="section-title">技术参数</text>
-          </view>
-          
-          <view class="form-card">
-            <view class="form-row">
-              <view class="form-item">
-                <text class="label">发动机型号</text>
-                <input class="input" v-model="form.engineModel" placeholder="如：BYD476ZQA" />
-              </view>
-
-              <view class="form-item">
-                <text class="label">排量(L)</text>
-                <input class="input" v-model="form.displacement" type="digit" placeholder="如：1.5" />
-              </view>
+          <view class="section">
+            <view class="section-header">
+              <text class="section-icon">📝</text>
+              <text class="section-title">备注信息</text>
             </view>
-
-            <view class="form-row">
-              <view class="form-item">
-                <text class="label">最大功率(kW)</text>
-                <input class="input" v-model="form.maxPower" type="digit" placeholder="如：118" />
-              </view>
-
-              <view class="form-item">
-                <text class="label">最大扭矩(N·m)</text>
-                <input class="input" v-model="form.maxTorque" type="number" placeholder="如：245" />
-              </view>
-            </view>
-
-            <view class="form-row">
-              <view class="form-item">
-                <text class="label">变速箱</text>
-                <picker mode="selector" :range="transmissionList" @change="onTransmissionChange">
-                  <view class="picker" :class="{ placeholder: !form.transmission }">
-                    {{ form.transmission || '请选择' }}
-                  </view>
-                </picker>
-              </view>
-
-              <view class="form-item">
-                <text class="label">驱动方式</text>
-                <picker mode="selector" :range="driveModeList" @change="onDriveModeChange">
-                  <view class="picker" :class="{ placeholder: !form.driveMode }">
-                    {{ form.driveMode || '请选择' }}
-                  </view>
-                </picker>
-              </view>
-            </view>
-
-            <view class="form-row">
-              <view class="form-item">
-                <text class="label">燃料类型</text>
-                <picker mode="selector" :range="fuelTypeList" @change="onFuelTypeChange">
-                  <view class="picker" :class="{ placeholder: !form.fuelType }">
-                    {{ form.fuelType || '请选择' }}
-                  </view>
-                </picker>
-              </view>
-
-              <view class="form-item">
-                <text class="label">座位数</text>
-                <picker mode="selector" :range="seatList" @change="onSeatChange">
-                  <view class="picker" :class="{ placeholder: !form.seats }">
-                    {{ form.seats || '请选择' }}
-                  </view>
-                </picker>
-              </view>
-            </view>
-
-            <view class="form-item">
-              <text class="label">年款</text>
-              <picker mode="selector" :range="yearList" @change="onYearChange">
-                <view class="picker" :class="{ placeholder: !form.year }">
-                  {{ form.year || '请选择年款' }}
-                </view>
-              </picker>
+            
+            <view class="form-card">
+              <up-form-item prop="remark">
+                <up-textarea 
+                  v-model="form.remark" 
+                  placeholder="如有其他信息需要备注，请在此输入..."
+                  :maxlength="200"
+                  count
+                  border="surround"
+                ></up-textarea>
+              </up-form-item>
             </view>
           </view>
-        </view>
 
-        <view class="section">
-          <view class="section-header">
-            <text class="section-icon">📋</text>
-            <text class="section-title">购车与保险信息</text>
+          <view class="btn-section">
+            <up-button 
+              type="primary" 
+              :loading="submitting"
+              @click="handleSubmit"
+              class="submit-btn"
+            >{{ isEdit ? '保存修改' : '添加车辆' }}</up-button>
           </view>
-          
-          <view class="form-card">
-            <view class="form-item">
-              <text class="label">购车日期</text>
-              <picker mode="date" @change="onPurchaseDateChange">
-                <view class="picker" :class="{ placeholder: !form.purchaseDate }">
-                  {{ form.purchaseDate || '请选择购车日期' }}
-                </view>
-              </picker>
-            </view>
-
-            <view class="form-item">
-              <text class="label">购车金额(万元)</text>
-              <input class="input" v-model="form.purchasePrice" type="digit" placeholder="如：15.98" />
-            </view>
-
-            <view class="form-item">
-              <text class="label">保险公司</text>
-              <input class="input" v-model="form.insuranceCompany" placeholder="如：中国人保" />
-            </view>
-
-            <view class="form-item">
-              <text class="label">保险到期日</text>
-              <picker mode="date" @change="onInsuranceExpiryChange">
-                <view class="picker" :class="{ placeholder: !form.insuranceExpiry }">
-                  {{ form.insuranceExpiry || '请选择保险到期日' }}
-                </view>
-              </picker>
-            </view>
-          </view>
-        </view>
-
-        <view class="section">
-          <view class="section-header">
-            <text class="section-icon">🔧</text>
-            <text class="section-title">保养设置</text>
-          </view>
-          
-          <view class="form-card">
-            <view class="form-item">
-              <text class="label">保养间隔(公里)</text>
-              <picker mode="selector" :range="maintenanceIntervalList" @change="onMaintenanceIntervalChange">
-                <view class="picker" :class="{ placeholder: !form.maintenanceInterval }">
-                  {{ form.maintenanceInterval || '请选择保养间隔' }}
-                </view>
-              </picker>
-              <text class="input-tip">建议根据保养手册选择合适的间隔</text>
-            </view>
-
-            <view class="form-item">
-              <text class="label">下次保养里程(km)</text>
-              <input 
-                class="input" 
-                v-model="form.nextMaintenanceMileage" 
-                type="number"
-                placeholder="如：55000"
-              />
-            </view>
-
-            <view class="form-item">
-              <text class="label">下次保养日期</text>
-              <picker mode="date" @change="onNextMaintenanceDateChange">
-                <view class="picker" :class="{ placeholder: !form.nextMaintenanceDate }">
-                  {{ form.nextMaintenanceDate || '请选择下次保养日期' }}
-                </view>
-              </picker>
-            </view>
-          </view>
-        </view>
-
-        <view class="section">
-          <view class="section-header">
-            <text class="section-icon">📝</text>
-            <text class="section-title">备注信息</text>
-          </view>
-          
-          <view class="form-card">
-            <view class="form-item">
-              <textarea 
-                class="textarea" 
-                v-model="form.remark" 
-                placeholder="如有其他信息需要备注，请在此输入..."
-                :maxlength="200"
-              />
-              <text class="word-count">{{ form.remark.length }}/200</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="form-actions">
-          <view class="btn-cancel" @click="goBack">
-            <text>取消</text>
-          </view>
-          <view class="btn-submit" :class="{ loading: submitting }" @click="handleSubmit">
-            <text v-if="!submitting">{{ isEdit ? '保存修改' : '添加车辆' }}</text>
-            <text v-else>提交中...</text>
-          </view>
-        </view>
+        </up-form>
       </view>
     </scroll-view>
+
+    <up-action-sheet :show="showBrandSheet" :actions="brandActions" @select="onBrandSelect" @close="showBrandSheet = false"></up-action-sheet>
+    <up-action-sheet :show="showColorSheet" :actions="colorActions" @select="onColorSelect" @close="showColorSheet = false"></up-action-sheet>
+    <up-action-sheet :show="showTransmissionSheet" :actions="transmissionActions" @select="onTransmissionSelect" @close="showTransmissionSheet = false"></up-action-sheet>
+    <up-action-sheet :show="showDriveModeSheet" :actions="driveModeActions" @select="onDriveModeSelect" @close="showDriveModeSheet = false"></up-action-sheet>
+    <up-action-sheet :show="showFuelTypeSheet" :actions="fuelTypeActions" @select="onFuelTypeSelect" @close="showFuelTypeSheet = false"></up-action-sheet>
+    <up-action-sheet :show="showSeatsSheet" :actions="seatsActions" @select="onSeatsSelect" @close="showSeatsSheet = false"></up-action-sheet>
+    <up-action-sheet :show="showYearSheet" :actions="yearActions" @select="onYearSelect" @close="showYearSheet = false"></up-action-sheet>
+
+    <up-datetime-picker 
+      :show="showPurchaseDatePicker" 
+      mode="date"
+      title="选择购车日期"
+      @confirm="onPurchaseDateConfirm"
+      @close="showPurchaseDatePicker = false"
+    ></up-datetime-picker>
+    <up-datetime-picker 
+      :show="showInsuranceExpiryPicker" 
+      mode="date"
+      title="选择保险到期日"
+      @confirm="onInsuranceExpiryConfirm"
+      @close="showInsuranceExpiryPicker = false"
+    ></up-datetime-picker>
+    <up-datetime-picker 
+      :show="showNextMaintenanceDatePicker" 
+      mode="date"
+      title="选择下次保养日期"
+      @confirm="onNextMaintenanceDateConfirm"
+      @close="showNextMaintenanceDatePicker = false"
+    ></up-datetime-picker>
   </view>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { post, put, get } from '../../../utils/auth'
+import { onShow } from '@dcloudio/uni-app'
+import { post, put, get, getToken, checkLoginAndRedirect } from '../../../utils/auth'
 
+const uForm = ref(null)
 const isEdit = ref(false)
 const submitting = ref(false)
-const errors = reactive({})
+
+const showBrandSheet = ref(false)
+const showColorSheet = ref(false)
+const showTransmissionSheet = ref(false)
+const showDriveModeSheet = ref(false)
+const showFuelTypeSheet = ref(false)
+const showSeatsSheet = ref(false)
+const showYearSheet = ref(false)
+const showPurchaseDatePicker = ref(false)
+const showInsuranceExpiryPicker = ref(false)
+const showNextMaintenanceDatePicker = ref(false)
 
 const form = reactive({
   plateNumber: '',
@@ -353,111 +455,88 @@ const form = reactive({
   remark: ''
 })
 
-const brandList = ['比亚迪', '特斯拉', '理想', '小鹏', '蔚来', '吉利', '长城', '长安', '奇瑞', '其他']
-const colorList = ['白色', '黑色', '银色', '灰色', '红色', '蓝色', '金色', '橙色', '绿色', '其他']
-const transmissionList = ['手动挡', '自动挡', '手自一体', 'CVT', '双离合']
-const driveModeList = ['前驱', '后驱', '四驱', '适时四驱']
-const fuelTypeList = ['汽油', '柴油', '纯电动', '插电混动', '增程式', '油电混动', '天然气']
-const seatList = ['2座', '4座', '5座', '6座', '7座', '8座及以上']
-const maintenanceIntervalList = ['3000', '5000', '7500', '10000', '15000']
+const brandActions = [
+  { name: '比亚迪' }, { name: '特斯拉' }, { name: '理想' }, { name: '小鹏' }, { name: '蔚来' }, { name: '吉利' }, { name: '长城' }, { name: '长安' }, { name: '奇瑞' }, { name: '其他' }
+]
+const colorActions = [
+  { name: '白色' }, { name: '黑色' }, { name: '银色' }, { name: '灰色' }, { name: '红色' }, { name: '蓝色' }, { name: '金色' }, { name: '橙色' }, { name: '绿色' }, { name: '其他' }
+]
+const transmissionActions = [
+  { name: '手动挡' }, { name: '自动挡' }, { name: '手自一体' }, { name: 'CVT' }, { name: '双离合' }
+]
+const driveModeActions = [
+  { name: '前驱' }, { name: '后驱' }, { name: '四驱' }, { name: '适时四驱' }
+]
+const fuelTypeActions = [
+  { name: '汽油' }, { name: '柴油' }, { name: '纯电动' }, { name: '插电混动' }, { name: '增程式' }, { name: '油电混动' }, { name: '天然气' }
+]
+const seatsActions = [
+  { name: '2座' }, { name: '4座' }, { name: '5座' }, { name: '6座' }, { name: '7座' }, { name: '8座及以上' }
+]
 
 const currentYear = new Date().getFullYear()
-const yearList = Array.from({ length: 10 }, (_, i) => `${currentYear - i}款`)
+const yearActions = Array.from({ length: 10 }, (_, i) => ({ name: `${currentYear - i}款` }))
 
-const validateField = (field) => {
-  switch(field) {
-    case 'plateNumber':
-      if (!form.plateNumber) {
-        errors.plateNumber = '请输入车牌号'
-      } else if (!/^[\u4e00-\u9fa5]{1}[A-Z]{1}[A-Z0-9]{5}$/.test(form.plateNumber)) {
-        errors.plateNumber = '车牌号格式不正确'
-      } else {
-        errors.plateNumber = ''
-      }
-      break
-    case 'brand':
-      errors.brand = form.brand ? '' : '请选择品牌'
-      break
-    case 'model':
-      errors.model = form.model ? '' : '请输入车型'
-      break
-    case 'vin':
-      if (form.vin && form.vin.length !== 17) {
-        errors.vin = '车架号必须是17位'
-      } else {
-        errors.vin = ''
-      }
-      break
-  }
+const onBrandSelect = (e) => {
+  form.brand = e.name
+  showBrandSheet.value = false
 }
 
-const validateForm = () => {
-  validateField('plateNumber')
-  validateField('brand')
-  validateField('model')
-  validateField('vin')
-  
-  return !errors.plateNumber && !errors.brand && !errors.model && !errors.vin
+const onColorSelect = (e) => {
+  form.color = e.name
+  showColorSheet.value = false
 }
 
-const onBrandChange = (e) => {
-  form.brand = brandList[e.detail.value]
-  validateField('brand')
+const onTransmissionSelect = (e) => {
+  form.transmission = e.name
+  showTransmissionSheet.value = false
 }
 
-const onColorChange = (e) => {
-  form.color = colorList[e.detail.value]
+const onDriveModeSelect = (e) => {
+  form.driveMode = e.name
+  showDriveModeSheet.value = false
 }
 
-const onTransmissionChange = (e) => {
-  form.transmission = transmissionList[e.detail.value]
+const onFuelTypeSelect = (e) => {
+  form.fuelType = e.name
+  showFuelTypeSheet.value = false
 }
 
-const onDriveModeChange = (e) => {
-  form.driveMode = driveModeList[e.detail.value]
+const onSeatsSelect = (e) => {
+  form.seats = e.name
+  showSeatsSheet.value = false
 }
 
-const onFuelTypeChange = (e) => {
-  form.fuelType = fuelTypeList[e.detail.value]
+const onYearSelect = (e) => {
+  form.year = e.name
+  showYearSheet.value = false
 }
 
-const onSeatChange = (e) => {
-  form.seats = seatList[e.detail.value]
+const onPurchaseDateConfirm = (e) => {
+  const date = new Date(e.value)
+  form.purchaseDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  showPurchaseDatePicker.value = false
 }
 
-const onYearChange = (e) => {
-  form.year = yearList[e.detail.value]
+const onInsuranceExpiryConfirm = (e) => {
+  const date = new Date(e.value)
+  form.insuranceExpiry = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  showInsuranceExpiryPicker.value = false
 }
 
-const onPurchaseDateChange = (e) => {
-  form.purchaseDate = e.detail.value
-}
-
-const onInsuranceExpiryChange = (e) => {
-  form.insuranceExpiry = e.detail.value
-}
-
-const onMaintenanceIntervalChange = (e) => {
-  form.maintenanceInterval = maintenanceIntervalList[e.detail.value]
-}
-
-const onNextMaintenanceDateChange = (e) => {
-  form.nextMaintenanceDate = e.detail.value
+const onNextMaintenanceDateConfirm = (e) => {
+  const date = new Date(e.value)
+  form.nextMaintenanceDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  showNextMaintenanceDatePicker.value = false
 }
 
 const choosePhoto = () => {
-  uni.showActionSheet({
-    itemList: ['拍照', '从相册选择'],
+  uni.chooseImage({
+    count: 6 - form.photos.length,
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
     success: (res) => {
-      const count = res.tapIndex === 0 ? 1 : 6 - form.photos.length
-      uni.chooseImage({
-        count: count,
-        sizeType: ['compressed'],
-        sourceType: res.tapIndex === 0 ? ['camera'] : ['album'],
-        success: (imgRes) => {
-          form.photos = [...form.photos, ...imgRes.tempFilePaths].slice(0, 6)
-        }
-      })
+      form.photos = [...form.photos, ...res.tempFilePaths].slice(0, 6)
     }
   })
 }
@@ -471,12 +550,18 @@ const goBack = () => {
 }
 
 const handleSubmit = async () => {
-  if (!validateForm()) {
+  if (!checkLogin()) return
+  
+  console.log('开始提交表单:', form)
+  
+  if (!form.plateNumber || !form.brand || !form.model) {
+    console.log('验证失败，缺少必填字段')
     uni.showToast({ title: '请完善必填信息', icon: 'none' })
     return
   }
   
   submitting.value = true
+  console.log('开始提交请求...')
   
   try {
     const data = { ...form }
@@ -486,12 +571,19 @@ const handleSubmit = async () => {
     if (data.maxTorque) data.maxTorque = Number(data.maxTorque)
     if (data.purchasePrice) data.purchasePrice = Number(data.purchasePrice)
     if (data.nextMaintenanceMileage) data.nextMaintenanceMileage = Number(data.nextMaintenanceMileage)
+    if (data.maintenanceInterval) data.maintenanceInterval = Number(data.maintenanceInterval)
+    
+    console.log('提交数据:', data)
     
     if (isEdit.value) {
-      await put(`/vehicles/${data.id}`, data)
+      console.log('发起更新请求:', data)
+      const res = await updateVehicle(data)
+      console.log('更新成功', res)
       uni.showToast({ title: '保存成功', icon: 'success' })
     } else {
-      await post('/vehicles', data)
+      console.log('发起创建请求:', data)
+      const res = await createVehicle(data)
+      console.log('添加成功', res)
       uni.showToast({ title: '添加成功', icon: 'success' })
     }
     
@@ -499,31 +591,86 @@ const handleSubmit = async () => {
       goBack()
     }, 1000)
   } catch (err) {
-    uni.showToast({ title: err.message || '操作失败', icon: 'none' })
+    console.error('请求失败:', err)
+    // 检查是否是由于未登录导致的错误
+    if (err.message && (err.message.includes('未登录') || err.message.includes('401'))) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    } else {
+      uni.showToast({ title: err.message || '操作失败', icon: 'none' })
+    }
   } finally {
     submitting.value = false
+    console.log('提交结束')
   }
 }
 
+import { ref, reactive, onMounted, onShow } from 'vue'
+import { post, put, get, getToken, checkLoginAndRedirect } from '../../../utils/auth'
+
+// 检查登录状态
+const checkLogin = () => {
+  if (!getToken()) {
+    uni.reLaunch({ url: '/pages/login/login' })
+    return false
+  }
+  return true
+}
+
 onMounted(() => {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
-  const options = currentPage.options || {}
+  if (!checkLogin()) return
   
-  if (options.id) {
-    isEdit.value = true
-    loadVehicleData(options.id)
+  try {
+    const pages = getCurrentPages()
+    const currentPage = pages[pages.length - 1]
+    const options = currentPage.options || {}
+    
+    if (options.id) {
+      isEdit.value = true
+      loadVehicle(options.id)
+    }
+  } catch (e) {
+    console.log('获取页面参数失败', e)
   }
 })
 
-const loadVehicleData = async (id) => {
+// 每次页面显示时检查登录状态
+onShow(() => {
+  if (!checkLogin()) {
+    return
+  }
+  
   try {
-    const res = await get(`/vehicles/${id}`)
-    if (res) {
-      Object.assign(form, res)
+    const pages = getCurrentPages()
+    const currentPage = pages[pages.length - 1]
+    const options = currentPage.options || {}
+    
+    if (options.id) {
+      isEdit.value = true
+      loadVehicle(options.id)
     }
   } catch (e) {
-    console.error('加载车辆数据失败', e)
+    console.log('获取页面参数失败', e)
+  }
+})
+
+const loadVehicle = async (id) => {
+  if (!checkLogin()) return
+  
+  try {
+    const res = await getVehicle(id)
+    if (res && res.data) {
+      Object.assign(form, res.data)
+    }
+  } catch (e) {
+    console.log('加载车辆信息失败', e)
+    // 检查是否是由于未登录导致的错误
+    if (e.message && (e.message.includes('未登录') || e.message.includes('401'))) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    }
+  }
+}
+  } catch (e) {
+    console.log('加载车辆信息失败', e)
   }
 }
 </script>
@@ -555,7 +702,7 @@ const loadVehicleData = async (id) => {
   justify-content: center;
 }
 
-.back-btn text {
+.back-icon {
   font-size: 20px;
   color: #333;
 }
@@ -607,105 +754,43 @@ const loadVehicleData = async (id) => {
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 
-.form-item {
-  margin-bottom: 20px;
-}
-
-.form-item:last-child {
-  margin-bottom: 0;
-}
-
 .form-row {
   display: flex;
   gap: 15px;
 }
 
-.form-row .form-item {
+.flex-1 {
   flex: 1;
 }
 
-.label {
+.unit {
   font-size: 14px;
-  color: #333;
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
+  color: #999;
 }
 
-.required {
-  color: #ff4d4f;
-}
-
-.input, .picker, .textarea {
-  border: 1px solid #e8e8e8;
-  border-radius: 12px;
-  padding: 14px 16px;
-  font-size: 15px;
-  background: #fafafa;
+.picker-input {
   width: 100%;
-  box-sizing: border-box;
+  position: relative;
 }
 
-.input:focus, .picker:focus, .textarea:focus {
-  border-color: #667eea;
-  background: #fff;
-}
-
-.picker {
-  color: #333;
-}
-
-.picker.placeholder, .input.placeholder {
-  color: #999;
-}
-
-.vin-input {
-  font-family: monospace;
-  letter-spacing: 1px;
-}
-
-.input-tip {
+.picker-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: 12px;
   color: #999;
-  margin-top: 6px;
-  display: block;
-}
-
-.error .input, .error .picker {
-  border-color: #ff4d4f;
-}
-
-.error-text {
-  font-size: 12px;
-  color: #ff4d4f;
-  margin-top: 6px;
-  display: block;
-}
-
-.textarea {
-  height: 100px;
-  resize: none;
-  line-height: 1.5;
-}
-
-.word-count {
-  font-size: 12px;
-  color: #999;
-  text-align: right;
-  display: block;
-  margin-top: 6px;
 }
 
 .photo-section {
-  margin-bottom: 20px;
+  margin-top: 10px;
 }
 
 .photo-label {
   font-size: 14px;
-  color: #333;
-  display: block;
+  color: #666;
   margin-bottom: 12px;
-  font-weight: 500;
+  display: block;
 }
 
 .photo-grid {
@@ -715,9 +800,11 @@ const loadVehicleData = async (id) => {
 }
 
 .photo-item {
-  position: relative;
   width: 100px;
   height: 100px;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .photo-img {
@@ -736,6 +823,9 @@ const loadVehicleData = async (id) => {
   border-radius: 12px;
   opacity: 0;
   transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .photo-item:hover .photo-cover {
@@ -743,9 +833,6 @@ const loadVehicleData = async (id) => {
 }
 
 .photo-remove {
-  position: absolute;
-  top: 4px;
-  right: 4px;
   width: 22px;
   height: 22px;
   background: #ff4d4f;
@@ -777,54 +864,14 @@ const loadVehicleData = async (id) => {
   margin-top: 4px;
 }
 
-.photo-tips {
-  background: #f9fafb;
-  border-radius: 12px;
-  padding: 15px;
+.btn-section {
+  padding: 20px;
+  padding-bottom: 40px;
 }
 
-.tip-title {
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.tip-item {
-  font-size: 12px;
-  color: #999;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 15px;
-  margin-top: 30px;
-  padding: 0 20px;
-}
-
-.btn-cancel, .btn-submit {
-  flex: 1;
-  text-align: center;
-  padding: 16px;
-  border-radius: 30px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.btn-cancel {
-  background: #f5f5f5;
-  color: #666;
-}
-
-.btn-submit {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-}
-
-.btn-submit.loading {
-  opacity: 0.7;
+.submit-btn {
+  width: 100%;
+  height: 50px;
+  font-size: 17px;
 }
 </style>

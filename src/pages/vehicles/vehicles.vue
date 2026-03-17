@@ -47,13 +47,13 @@
           <view class="action-btn edit" @click.stop="editVehicle(item)">
             <text>✏️ 编辑</text>
           </view>
-          <view class="action-btn delete" @click.stop="deleteVehicle(item.id)">
+          <view class="action-btn delete" @click.stop="deleteVehicleById(item.id)">
             <text>🗑️ 删除</text>
           </view>
         </view>
       </view>
       
-      <view class="empty" v-if="vehicles.length === 0">
+      <view class="empty" v-if="!vehicles || vehicles.length === 0">
         <text class="empty-icon">🚗</text>
         <text class="empty-text">暂无车辆，请添加您的第一辆车</text>
         <view class="empty-btn" @click="addVehicle">添加车辆</view>
@@ -159,8 +159,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { get, post, put, del } from '../../utils/auth'
+import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { get, post, put, del, getVehicleList, getVehicle, createVehicle, updateVehicle, deleteVehicle, getToken } from '../../utils/auth'
 
 const vehicles = ref([])
 const showModal = ref(false)
@@ -180,6 +181,28 @@ const form = ref({
   nextMaintenanceMileage: ''
 })
 
+// 检查登录状态
+const checkLogin = () => {
+  if (!getToken()) {
+    uni.reLaunch({ url: '/pages/login/login' })
+    return false
+  }
+  return true
+}
+
+onMounted(() => {
+  if (checkLogin()) {
+    loadVehicles()
+  }
+})
+
+// 每次页面显示时检查登录状态
+onShow(() => {
+  if (checkLogin()) {
+    loadVehicles()
+  }
+})
+
 const getStatusClass = (item) => {
   if (item.needsRepair) return 'needs-repair'
   if (item.nextMaintenance && item.nextMaintenance.days <= 7) return 'needs-maintenance'
@@ -188,10 +211,16 @@ const getStatusClass = (item) => {
 
 const loadVehicles = async () => {
   try {
-    const res = await get('/vehicles')
-    vehicles.value = res || []
+    const res = await getVehicleList()
+    vehicles.value = res?.data || []
   } catch (e) {
-    vehicles.value = []
+    console.log('加载车辆列表失败:', e)
+    // 检查是否是由于未登录导致的错误
+    if (e.message && (e.message.includes('未登录') || e.message.includes('401'))) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    } else {
+      vehicles.value = []
+    }
   }
 }
 
@@ -230,25 +259,26 @@ const saveVehicle = async () => {
     if (data.nextMaintenanceMileage) data.nextMaintenanceMileage = Number(data.nextMaintenanceMileage)
     
     if (isEdit.value) {
-      await put(`/vehicles/${form.value.id}`, data)
+      await updateVehicle(data)
     } else {
-      await post('/vehicles', data)
+      await createVehicle(data)
     }
     showModal.value = false
     uni.showToast({ title: '保存成功', icon: 'success' })
     loadVehicles()
   } catch (err) {
+    console.log('保存失败:', err)
     uni.showToast({ title: '保存失败', icon: 'none' })
   }
 }
 
-const deleteVehicle = async (id) => {
+const deleteVehicleById = async (id) => {
   uni.showModal({
     title: '确认删除',
     content: '确定要删除该车辆吗？此操作不可恢复。',
     success: async (res) => {
       if (res.confirm) {
-        await del(`/vehicles/${id}`)
+        await deleteVehicle(id)
         uni.showToast({ title: '删除成功', icon: 'success' })
         loadVehicles()
       }

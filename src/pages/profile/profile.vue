@@ -106,7 +106,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { get, post, removeToken, setUser } from '../../utils/auth'
+import { onShow } from '@dcloudio/uni-app'
+import { get, post, removeToken, setUser, getToken } from '../../utils/auth'
 
 const userInfo = ref({
   name: '车主',
@@ -125,19 +126,36 @@ const editForm = ref({
   phone: ''
 })
 
+// 检查登录状态
+const checkLogin = () => {
+  if (!getToken()) {
+    uni.reLaunch({ url: '/pages/login/login' })
+    return false
+  }
+  return true
+}
+
 const formatPhone = (phone) => {
   if (!phone) return ''
   return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
 }
 
 const loadUserInfo = async () => {
+  if (!checkLogin()) return
+  
   try {
     const user = await get('/user/info')
     if (user) {
       userInfo.value = user
     }
   } catch (e) {
-    // 使用默认信息
+    console.log('加载用户信息失败:', e)
+    // 检查是否是由于未登录导致的错误
+    if (e.message && (e.message.includes('未登录') || e.message.includes('401'))) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    } else {
+      // 使用默认信息
+    }
   }
 }
 
@@ -151,6 +169,8 @@ const closeModal = () => {
 }
 
 const saveProfile = async () => {
+  if (!checkLogin()) return
+  
   if (!editForm.value.name) {
     uni.showToast({ title: '请输入姓名', icon: 'none' })
     return
@@ -163,36 +183,54 @@ const saveProfile = async () => {
     uni.showToast({ title: '保存成功', icon: 'success' })
     closeModal()
   } catch (e) {
-    uni.showToast({ title: '保存失败', icon: 'none' })
+    console.log('保存失败:', e)
+    // 检查是否是由于未登录导致的错误
+    if (e.message && (e.message.includes('未登录') || e.message.includes('401'))) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    } else {
+      uni.showToast({ title: '保存失败', icon: 'none' })
+    }
   }
 }
 
 const goVehicles = () => {
-  uni.navigateTo({ url: '/pages/vehicles/vehicles' })
+  if (checkLogin()) {
+    uni.navigateTo({ url: '/pages/vehicles/vehicles' })
+  }
 }
 
 const goMaintenance = () => {
-  uni.showToast({ title: '维护历史功能开发中', icon: 'none' })
+  if (checkLogin()) {
+    uni.showToast({ title: '维护历史功能开发中', icon: 'none' })
+  }
 }
 
 const changePassword = () => {
-  uni.showToast({ title: '修改密码功能开发中', icon: 'none' })
+  if (checkLogin()) {
+    uni.showToast({ title: '修改密码功能开发中', icon: 'none' })
+  }
 }
 
 const changePhone = () => {
-  uni.showToast({ title: '更换手机号功能开发中', icon: 'none' })
+  if (checkLogin()) {
+    uni.showToast({ title: '更换手机号功能开发中', icon: 'none' })
+  }
 }
 
 const goNotifications = () => {
-  uni.showToast({ title: '消息通知功能开发中', icon: 'none' })
+  if (checkLogin()) {
+    uni.showToast({ title: '消息通知功能开发中', icon: 'none' })
+  }
 }
 
 const goAbout = () => {
-  uni.showModal({
-    title: '关于我们',
-    content: '智能车诊 V1.0.0\n让故障诊断更简单',
-    showCancel: false
-  })
+  if (checkLogin()) {
+    uni.showModal({
+      title: '关于我们',
+      content: '智能车诊 V1.0.0\n让故障诊断更简单',
+      showCancel: false
+    })
+  }
 }
 
 const logout = () => {
@@ -210,6 +248,13 @@ const logout = () => {
 
 onMounted(() => {
   loadUserInfo()
+})
+
+// 每次页面显示时检查登录状态
+onShow(() => {
+  if (checkLogin()) {
+    loadUserInfo()
+  }
 })
 </script>
 

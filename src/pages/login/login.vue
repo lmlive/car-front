@@ -1,73 +1,73 @@
 <template>
   <view class="login-container">
     <view class="header">
+      <view class="logo-wrapper">
+        <view class="logo">
+          <text class="logo-icon">🚗</text>
+        </view>
+      </view>
       <text class="title">欢迎回来</text>
       <text class="subtitle">登录您的账号以管理车辆</text>
     </view>
     
-    <view class="form">
-      <view class="input-group">
-        <text class="label">手机号</text>
-        <input 
-          class="input" 
-          type="number" 
-          v-model="mobile" 
-          placeholder="请输入手机号" 
-          maxlength="11"
-        />
+    <view class="form-card">
+      <view class="form">
+        <view class="input-item">
+          <text class="input-icon">📱</text>
+          <input 
+            class="input" 
+            type="number" 
+            v-model="mobile" 
+            placeholder="请输入手机号" 
+            maxlength="11"
+          />
+        </view>
+        
+        <view class="input-item">
+          <text class="input-icon">🔒</text>
+          <input 
+            class="input" 
+            :password="!showPassword" 
+            v-model="password" 
+            placeholder="请输入密码" 
+          />
+          <text class="eye-icon" @click="showPassword = !showPassword">
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </text>
+        </view>
+        
+        <view class="actions">
+          <text class="forgot-pwd" @click="goForgotPwd">忘记密码？</text>
+        </view>
+        
+        <button 
+          class="login-btn" 
+          :class="{ 'btn-disabled': !canSubmit }"
+          :disabled="!canSubmit || loading"
+          @click="handleLogin"
+        >
+          <text v-if="!loading" class="btn-text">登 录</text>
+          <view v-else class="loading-icon"></view>
+        </button>
+        
+        <view class="register-link">
+          <text class="register-text">还没有账号？</text>
+          <text class="link" @click="goRegister">立即注册</text>
+        </view>
       </view>
-      
-      <view class="input-group">
-        <text class="label">密码</text>
-        <input 
-          class="input" 
-          type="password" 
-          v-model="password" 
-          placeholder="请输入密码" 
-        />
-      </view>
-      
-      <view class="actions">
-        <text class="forgot-pwd" @click="goForgotPwd">忘记密码？</text>
-      </view>
-      
-      <button 
-        class="login-btn" 
-        :class="{ 'btn-disabled': !canSubmit }"
-        :disabled="!canSubmit || loading"
-        @click="handleLogin"
-      >
-        <text v-if="!loading">登录</text>
-        <view v-else class="loading-icon"></view>
-      </button>
-      
-      <view class="register-link">
-      <text>还没有账号？</text>
-      <text class="link" @click="goRegister">立即注册</text>
-    </view>
-
-    <view class="driver-entry">
-      <view class="divider">
-        <view class="divider-line"></view>
-        <text class="divider-text">司机入口</text>
-        <view class="divider-line"></view>
-      </view>
-      <view class="driver-btn" @click="goDriverLogin">
-        <text>我是司机，点击登录</text>
-      </view>
-    </view>
-  </view>
-</template>
     </view>
   </view>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import { post } from '../../utils/request'
+import { setToken, setUser } from '../../utils/auth'
 
 const mobile = ref('')
 const password = ref('')
 const loading = ref(false)
+const showPassword = ref(false)
 
 const canSubmit = computed(() => {
   return mobile.value.length === 11 && password.value.length >= 6
@@ -79,14 +79,13 @@ const handleLogin = async () => {
   loading.value = true
   
   try {
-    const res = await uni.$http.post('/member/auth/login', {
+    const res = await post('/driver/login', {
       mobile: mobile.value,
       password: password.value
     })
     
-    // 登录成功，保存 token 和用户信息
-    uni.setStorageSync('token', res.accessToken)
-    uni.setStorageSync('userInfo', { mobile: mobile.value, id: res.userId })
+    setToken(res.access_token)
+    setUser(res.user)
     
     uni.showToast({
       title: '登录成功',
@@ -113,65 +112,163 @@ const goRegister = () => {
 }
 
 const goForgotPwd = () => {
-  uni.navigateTo({
-    url: '/pages/reset/reset'
-  })
-}
-
-const goDriverLogin = () => {
-  uni.navigateTo({
-    url: '/pages/driver-login/driver-login'
+  uni.showToast({
+    title: '找回密码功能开发中',
+    icon: 'none'
   })
 }
 </script>
 
-<style scoped>
-/* 保持原有样式不变 */
-.login-container { padding: 30px 20px; }
-.header { margin-bottom: 40px; }
-.title { font-size: 28px; font-weight: bold; color: #333; display: block; margin-bottom: 10px; }
-.subtitle { font-size: 14px; color: #666; }
-.form { width: 100%; }
-.input-group { margin-bottom: 25px; }
-.label { font-size: 14px; color: #333; margin-bottom: 8px; display: block; font-weight: 500; }
-.input { height: 44px; border-bottom: 1px solid #eee; font-size: 16px; padding: 0 10px; }
-.actions { display: flex; justify-content: flex-end; margin-bottom: 30px; }
-.forgot-pwd { font-size: 14px; color: #666; }
-.login-btn { background-color: #007aff; color: #fff; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 500; margin-bottom: 20px; border: none; }
-.btn-disabled { background-color: #a0cfff; }
-.register-link { text-align: center; font-size: 14px; color: #666; }
-.link { color: #007aff; margin-left: 5px; font-weight: 500; }
-.loading-icon { width: 20px; height: 20px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.driver-entry {
-  margin-top: 30px;
+<style scoped lang="scss">
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 60px 20px 30px;
 }
 
-.divider {
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.logo-icon {
+  font-size: 40px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #fff;
+  display: block;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.form-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 30px 25px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.form {
+  width: 100%;
+}
+
+.input-item {
+  display: flex;
+  align-items: center;
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 12px 15px;
   margin-bottom: 20px;
+  border: 1px solid transparent;
+  transition: all 0.3s;
 }
 
-.divider-line {
+.input-item:focus-within {
+  border-color: #667eea;
+  background: #fff;
+}
+
+.input-icon {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.input {
   flex: 1;
-  height: 1px;
-  background: #eee;
+  font-size: 16px;
+  color: #333;
 }
 
-.divider-text {
-  padding: 0 15px;
-  font-size: 13px;
-  color: #999;
+.eye-icon {
+  font-size: 16px;
+  padding: 5px;
 }
 
-.driver-btn {
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 25px;
+}
+
+.forgot-pwd {
+  font-size: 14px;
+  color: #667eea;
+}
+
+.login-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
-  padding: 15px;
+  height: 50px;
   border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  
+  &.btn-disabled {
+    background: #ccc;
+    box-shadow: none;
+  }
+}
+
+.btn-text {
+  letter-spacing: 5px;
+}
+
+.loading-icon {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.register-link {
   text-align: center;
   font-size: 14px;
+}
+
+.register-text {
+  color: #666;
+}
+
+.link {
+  color: #667eea;
+  margin-left: 5px;
+  font-weight: 500;
 }
 </style>

@@ -63,7 +63,7 @@
         </view>
       </view>
 
-      <view class="empty" v-if="vehicles.length === 0">
+      <view class="empty" v-if="!vehicles || vehicles.length === 0">
         <text class="empty-icon">🚗</text>
         <text class="empty-text">暂无车辆，请添加您的第一辆车</text>
         <view class="empty-btn" @click="addVehicle">添加车辆</view>
@@ -89,7 +89,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { get } from '../../utils/auth'
+import { onShow } from '@dcloudio/uni-app'
+import { get, getToken } from '../../utils/auth'
 
 const userInfo = ref({
   name: '车主',
@@ -97,6 +98,15 @@ const userInfo = ref({
 })
 
 const vehicles = ref([])
+
+// 检查登录状态
+const checkLogin = () => {
+  if (!getToken()) {
+    uni.reLaunch({ url: '/pages/login/login' })
+    return false
+  }
+  return true
+}
 
 const getVehicleStatus = (vehicle) => {
   if (vehicle.needsRepair) {
@@ -109,44 +119,63 @@ const getVehicleStatus = (vehicle) => {
 }
 
 const loadVehicles = async () => {
+  if (!checkLogin()) return
+  
   try {
     const res = await get('/vehicles')
     vehicles.value = res || []
   } catch (e) {
-    vehicles.value = []
+    console.log('加载车辆列表失败:', e)
+    // 检查是否是由于未登录导致的错误
+    if (e.message && (e.message.includes('未登录') || e.message.includes('401'))) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    } else {
+      vehicles.value = []
+    }
   }
 }
 
 const addVehicle = () => {
-  uni.navigateTo({ url: '/pages/vehicle/add/add' })
+  if (checkLogin()) {
+    uni.navigateTo({ url: '/pages/vehicle/add/add' })
+  }
 }
 
 const goDetail = (item) => {
-  uni.navigateTo({ url: `/pages/vehicles/vehicles?id=${item.id}` })
+  if (checkLogin()) {
+    uni.navigateTo({ url: `/pages/vehicles/vehicles?id=${item.id}` })
+  }
 }
 
 const quickDiagnose = (item) => {
-  uni.navigateTo({ url: `/pages/diagnose/diagnose?vehicleId=${item.id}` })
+  if (checkLogin()) {
+    uni.navigateTo({ url: `/pages/diagnose/diagnose?vehicleId=${item.id}` })
+  }
 }
 
 const viewRecord = (item) => {
-  uni.showToast({ title: '查看维修记录', icon: 'none' })
+  if (checkLogin()) {
+    uni.showToast({ title: '查看维修记录', icon: 'none' })
+  }
 }
 
 const goDiagnose = () => {
-  uni.switchTab({ url: '/pages/diagnose/diagnose' })
-}
-
-const goAppointment = () => {
-  uni.showToast({ title: '预约功能开发中', icon: 'none' })
-}
-
-const goStore = () => {
-  uni.showToast({ title: '门店功能开发中', icon: 'none' })
+  if (checkLogin()) {
+    uni.switchTab({ url: '/pages/diagnose/diagnose' })
+  }
 }
 
 onMounted(() => {
-  loadVehicles()
+  if (checkLogin()) {
+    loadVehicles()
+  }
+})
+
+// 每次页面显示时检查登录状态
+onShow(() => {
+  if (checkLogin()) {
+    loadVehicles()
+  }
 })
 </script>
 

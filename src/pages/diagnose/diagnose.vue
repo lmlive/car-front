@@ -132,7 +132,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { get, post } from '../../utils/auth'
+import { onShow } from '@dcloudio/uni-app'
+import { get, post, getToken } from '../../utils/auth'
+
+// 检查登录状态
+const checkLogin = () => {
+  if (!getToken()) {
+    uni.reLaunch({ url: '/pages/login/login' })
+    return false
+  }
+  return true
+}
 
 const vehicles = ref([])
 const selectedVehicle = ref(null)
@@ -158,6 +168,8 @@ const getPriorityText = (priority) => {
 }
 
 const loadVehicles = async () => {
+  if (!checkLogin()) return
+  
   try {
     const res = await get('/vehicles')
     vehicles.value = res || []
@@ -173,7 +185,13 @@ const loadVehicles = async () => {
       }
     }
   } catch (e) {
-    vehicles.value = []
+    console.log('加载车辆列表失败:', e)
+    // 检查是否是由于未登录导致的错误
+    if (e.message && (e.message.includes('未登录') || e.message.includes('401'))) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    } else {
+      vehicles.value = []
+    }
   }
 }
 
@@ -183,6 +201,8 @@ const onVehicleChange = (e) => {
 }
 
 const choosePhoto = () => {
+  if (!checkLogin()) return
+  
   uni.showActionSheet({
     itemList: ['拍照', '从相册选择'],
     success: (res) => {
@@ -214,6 +234,8 @@ const removePhoto = (index) => {
 }
 
 const startDiagnose = async () => {
+  if (!checkLogin()) return
+  
   if (!canSubmit.value) {
     uni.showToast({ title: '请选择车辆并描述故障', icon: 'none' })
     return
@@ -230,37 +252,36 @@ const startDiagnose = async () => {
       photos: photos.value
     })
     result.value = res
-    
-    history.value.unshift({
-      id: Date.now(),
-      vehiclePlate: selectedVehicle.value.plateNumber,
-      symptom: symptom.value.substring(0, 50) + '...',
-      date: new Date().toLocaleDateString('zh-CN'),
-      priority: res.priority
-    })
-    
-    uni.showToast({ title: '诊断完成', icon: 'success' })
-  } catch (err) {
-    uni.showToast({ title: '诊断失败', icon: 'none' })
+  } catch (e) {
+    console.log('诊断失败:', e)
+    // 检查是否是由于未登录导致的错误
+    if (e.message && (e.message.includes('未登录') || e.message.includes('401'))) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    } else {
+      uni.showToast({ title: '诊断失败', icon: 'none' })
+    }
   } finally {
     loading.value = false
   }
 }
 
-const bookRepair = () => {
-  uni.showToast({ title: '预约功能开发中', icon: 'none' })
-}
-
-const shareResult = () => {
-  uni.showToast({ title: '分享功能开发中', icon: 'none' })
-}
-
-const viewHistory = (item) => {
-  uni.showToast({ title: '查看历史诊断', icon: 'none' })
+const clear = () => {
+  symptom.value = ''
+  photos.value = []
+  result.value = null
 }
 
 onMounted(() => {
-  loadVehicles()
+  if (checkLogin()) {
+    loadVehicles()
+  }
+})
+
+// 每次页面显示时检查登录状态
+onShow(() => {
+  if (checkLogin()) {
+    loadVehicles()
+  }
 })
 </script>
 

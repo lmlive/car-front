@@ -1,4 +1,4 @@
-const BASE_URL = '/app-api'
+const BASE_URL = 'http://localhost:48080'
 
 export const request = (options) => {
   return new Promise((resolve, reject) => {
@@ -46,6 +46,8 @@ export const request = (options) => {
   })
 }
 
-// 通用的 GET / POST 方法
+// 通用的 GET / POST / PUT / DELETE 方法
 export const get = (url, data) => request({ url, method: 'GET', data })
 export const post = (url, data) => request({ url, method: 'POST', data })
+export const put = (url, data) => request({ url, method: 'PUT', data })
+export const del = (url, data) => request({ url, method: 'DELETE', data })

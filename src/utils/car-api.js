@@ -18,6 +18,6 @@ export const carAPI = {
   },
   
   deleteVehicle(id) {
-    return post(`/car/app/vehicle/delete`, { id })
+    return del('/car/app/vehicle/delete', { id })
   }
 }

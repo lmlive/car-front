@@ -22,99 +22,215 @@ export function setUser(user) {
   uni.setStorageSync(USER_KEY, JSON.stringify(user))
 }
 
+// 品牌名到ID的映射（用于原型演示，实际部署时应从API获取）
+const BRAND_NAME_TO_ID = {
+  '比亚迪': 1,
+  '特斯拉': 2,
+  '理想': 3,
+  '小鹏': 4,
+  '蔚来': 5,
+  '吉利': 6,
+  '长城': 7,
+  '长安': 8,
+  '奇瑞': 9,
+  '其他': 10
+}
+
+// 模型名到ID的映射（用于原型演示，实际部署时应从API获取）
+const MODEL_NAME_TO_ID = {
+  '秦PLUS': 1,
+  '汉EV': 2,
+  'Model 3': 3,
+  'Model Y': 4,
+  '理想ONE': 5,
+  '理想L9': 6,
+  '小鹏P7': 7,
+  '小鹏P5': 8,
+  '蔚来ES6': 9,
+  '蔚来ET5': 10
+}
+
+// 将前端字段名转换为后端字段名
+function convertToFrontendFields(vehicle) {
+  if (!vehicle) return vehicle
+  return {
+    id: vehicle.id,
+    userId: vehicle.userId,
+    plateNumber: vehicle.licensePlate,  // 后端字段: licensePlate -> 前端字段: plateNumber
+    brand: vehicle.brandName || vehicle.brand,  // 后端可能返回brandName或brand
+    model: vehicle.modelName || vehicle.model,  // 后端可能返回modelName或model
+    vin: vehicle.vinCode,  // 后端字段: vinCode -> 前端字段: vin
+    color: vehicle.color,
+    mileage: vehicle.mileage,
+    registerDate: vehicle.purchaseDate,  // 后端字段: purchaseDate -> 前端字段: registerDate
+    nextInspectDate: vehicle.nextMaintenanceDate,  // 后端字段: nextMaintenanceDate -> 前端字段: nextInspectDate
+    insuranceCompany: vehicle.insuranceCompany,
+    insuranceDate: vehicle.insuranceExpiryDate,  // 后端字段: insuranceExpiryDate -> 前端字段: insuranceDate
+    commercialInsuranceDate: vehicle.commercialInsuranceDate,
+    maintenanceInterval: vehicle.maintenanceInterval,
+    nextMaintenanceMileage: vehicle.nextMaintenanceMileage,
+    nextMaintenanceDate: vehicle.nextMaintenanceDate,
+    licenseFront: vehicle.licenseFront,
+    licenseBack: vehicle.licenseBack,
+    status: vehicle.status,
+    createTime: vehicle.create_time || vehicle.createTime
+  }
+}
+
+// 将后端字段名转换为前端字段名
+function convertToBackendFields(vehicle) {
+  if (!vehicle) return vehicle
+  return {
+    id: vehicle.id,
+    userId: vehicle.userId,
+    licensePlate: vehicle.plateNumber,  // 前端字段: plateNumber -> 后端字段: licensePlate
+    brandId: typeof vehicle.brand === 'string' ? BRAND_NAME_TO_ID[vehicle.brand] || 1 : vehicle.brand,  // 映射品牌名到ID
+    modelId: typeof vehicle.model === 'string' ? MODEL_NAME_TO_ID[vehicle.model] || 1 : vehicle.model,  // 映射模型名到ID
+    vinCode: vehicle.vin,  // 前端字段: vin -> 后端字段: vinCode
+    color: vehicle.color,
+    mileage: vehicle.mileage,
+    purchaseDate: vehicle.registerDate,  // 前端字段: registerDate -> 后端字段: purchaseDate
+    nextMaintenanceDate: vehicle.nextInspectDate,  // 前端字段: nextInspectDate -> 后端字段: nextMaintenanceDate
+    insuranceCompany: vehicle.insuranceCompany,
+    insuranceExpiryDate: vehicle.insuranceDate,  // 前端字段: insuranceDate -> 后端字段: insuranceExpiryDate
+    commercialInsuranceDate: vehicle.commercialInsuranceDate,
+    maintenanceInterval: vehicle.maintenanceInterval,
+    nextMaintenanceMileage: vehicle.nextMaintenanceMileage,
+    images: vehicle.photos ? JSON.stringify(vehicle.photos) : null,  // 前端字段: photos -> 后端字段: images
+    engineModel: vehicle.engineModel,
+    displacement: vehicle.displacement,
+    maxPower: vehicle.maxPower,
+    maxTorque: vehicle.maxTorque,
+    transmission: vehicle.transmission,
+    driveMode: vehicle.driveMode,
+    fuelType: vehicle.fuelType,
+    seatCount: vehicle.seats,  // 前端字段: seats -> 后端字段: seatCount
+    year: vehicle.year,
+    purchaseAmount: vehicle.purchasePrice  // 前端字段: purchasePrice -> 后端字段: purchaseAmount
+  }
+}
+
 export function request(url, options = {}) {
   const token = getToken()
   
-  const mockData = {
-    '/api/auth/login': {
-      access_token: 'mock_token_123456',
-      user: {
-        id: 1,
-        phone: '13812345678',
-        name: '车主'
-      }
-    },
-    '/api/user/info': {
-      id: 1,
-      phone: '13812345678',
-      name: '车主'
-    },
-    '/api/user/update': {
-      success: true
-    },
-    '/api/vehicles': [
-      {
-        id: 1,
-        plateNumber: '京A12345',
-        brand: '比亚迪',
-        model: '秦PLUS',
-        vin: '1HGCM82633A123456',
-        color: '白色',
-        repairCount: 5,
-        lastRepairDate: '2026-02-15',
-        needsRepair: false,
-        nextMaintenance: {
-          days: 15,
-          reminderText: '下次保养：更换机油机滤'
-        }
-      },
-      {
-        id: 2,
-        plateNumber: '沪B67890',
-        brand: '特斯拉',
-        model: 'Model 3',
-        vin: '5YJ3E1EB5MF123456',
-        color: '黑色',
-        repairCount: 2,
-        lastRepairDate: '2026-01-20',
-        needsRepair: true,
-        nextMaintenance: {
-          days: 3,
-          reminderText: '下次保养：更换空调滤芯'
-        }
-      }
-    ],
-    '/api/ai/diagnose': {
-      diagnosis: '根据您描述的症状和上传的照片分析，车辆存在以下问题：\n\n1. 发动机积碳：启动时有异常响声，这是典型的积碳导致的气门异响症状，需要进行发动机清洗。\n\n2. 刹车系统轻微磨损：刹车时有抖动的感觉，可能是刹车盘表面不平或刹车片磨损不均匀，建议检查刹车片厚度。\n\n3. 传感器信号异常：仪表盘亮起故障灯，可能是氧传感器或水温传感器出现故障，需要使用诊断仪读取具体故障码。\n\n4. 燃油系统问题：行驶中动力不足且油耗增加，可能是燃油泵压力不足或喷油嘴堵塞。',
-      reasons: [
-        '发动机积碳导致气门异响',
-        '刹车盘表面不平或刹车片磨损',
-        '氧传感器或水温传感器故障',
-        '燃油泵压力不足或喷油嘴堵塞'
-      ],
-      solutions: [
-        '到4S店进行发动机清洗服务',
-        '检查并更换刹车片，必要时研磨刹车盘',
-        '使用诊断仪读取故障码，更换故障传感器',
-        '检查燃油泵压力，清洗喷油嘴'
-      ],
-      priority: 'high',
-      timestamp: new Date().toISOString()
+  // 检查是否为公共API（不需要登录）
+  const isPublicAPI = url.startsWith('/auth/') || url.startsWith('/driver/') || url === '/login' || url === '/register'
+  
+  // 如果不是公共API并且没有token，返回错误
+  if (!isPublicAPI && !token) {
+    console.error('未登录，无法访问此API:', url)
+    uni.reLaunch({ url: '/pages/login/login' })
+    return Promise.reject(new Error('未登录'))
+  }
+  
+  console.log('发起请求:', url, options)
+  
+  // 将相对路径转换为完整路径
+  const apiUrl = url.startsWith('/') ? url : '/' + url
+  
+  // 构建请求配置
+  const config = {
+    url: 'http://localhost:48080' + apiUrl,  // 后端服务地址
+    method: options.method || 'GET',
+    header: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
     }
   }
   
+  // 根据不同方法添加数据
+  if (options.method === 'POST' || options.method === 'PUT') {
+    // 对于车辆相关的POST/PUT请求，转换字段名
+    if (url.includes('/vehicle')) {
+      config.data = convertToBackendFields(options.data)
+    } else {
+      config.data = options.data
+    }
+  } else if (options.method === 'GET' && options.data) {
+    // 添加查询参数
+    const queryString = Object.keys(options.data)
+      .filter(key => options.data[key] !== undefined && options.data[key] !== null)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(options.data[key])}`)
+      .join('&')
+    if (queryString) {
+      config.url += (apiUrl.includes('?') ? '&' : '?') + queryString
+    }
+  } else if (options.method === 'DELETE' && options.data) {
+    // 为DELETE请求添加查询参数
+    const queryString = Object.keys(options.data)
+      .filter(key => options.data[key] !== undefined && options.data[key] !== null)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(options.data[key])}`)
+      .join('&')
+    if (queryString) {
+      config.url += (apiUrl.includes('?') ? '&' : '?') + queryString
+    }
+  }
+  
+  console.log('发送请求到:', config.url, '方法:', config.method, '数据:', config.data)
+  
   return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (url === '/api/auth/login' && options.method === 'POST') {
-        resolve(mockData['/api/auth/login'])
-      } else if (url === '/api/user/info' && options.method === 'GET') {
-        resolve(mockData['/api/user/info'])
-      } else if (url === '/api/user/update' && options.method === 'POST') {
-        resolve(mockData['/api/user/update'])
-      } else if (url === '/api/vehicles' && options.method === 'GET') {
-        resolve(mockData['/api/vehicles'])
-      } else if (url === '/api/ai/diagnose' && options.method === 'POST') {
-        resolve(mockData['/api/ai/diagnose'])
-      } else if (url.startsWith('/api/vehicles/') && options.method === 'PUT') {
-        resolve({ success: true })
-      } else if (url.startsWith('/api/vehicles/') && options.method === 'DELETE') {
-        resolve({ success: true })
-      } else if (url === '/api/vehicles' && options.method === 'POST') {
-        resolve({ success: true })
-      } else {
-        resolve({})
+    uni.request({
+      ...config,
+      success: (res) => {
+        console.log('请求响应:', res)
+        // 检查是否为401未授权错误
+        if (res.statusCode === 401) {
+          console.error('登录已过期，请重新登录')
+          // 使用setTimeout确保在当前回调完成后执行跳转
+          setTimeout(() => {
+            uni.reLaunch({ url: '/pages/login/login' })
+          }, 0)
+          reject(new Error('登录已过期'))
+          return
+        }
+        
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          let responseData = res.data
+          
+          // 如果是车辆相关的响应，转换字段名
+          if (url.includes('/vehicle') && responseData && responseData.data) {
+            if (Array.isArray(responseData.data)) {
+              // 如果是数组（如列表）
+              responseData.data = responseData.data.map(convertToFrontendFields)
+            } else if (typeof responseData.data === 'object') {
+              // 如果是单个对象
+              responseData.data = convertToFrontendFields(responseData.data)
+            }
+          }
+          
+          resolve(responseData)
+        } else {
+          console.error('请求失败:', res.statusCode, res.data)
+          // 如果是401错误，即使不在200-300范围内也要特殊处理
+          if (res.statusCode === 401) {
+            console.error('登录已过期，请重新登录')
+            setTimeout(() => {
+              uni.reLaunch({ url: '/pages/login/login' })
+            }, 0)
+            reject(new Error('登录已过期'))
+          } else {
+            reject(new Error(`请求失败: ${res.statusCode} ${res.errMsg || res.data?.message || '未知错误'}`))
+          }
+        }
+      },
+      fail: (err) => {
+        console.error('请求失败:', err)
+        // 检查网络错误或其他连接问题
+        if (err.errMsg && err.errMsg.includes('request:fail')) {
+          // 尝试重新检查登录状态，因为可能是在后台太久token过期了
+          const currentToken = getToken()
+          if (currentToken) {
+            // 如果有token但请求失败，可能是token过期
+            console.warn('请求失败，可能token已过期')
+            // 尝试跳转到登录页
+            setTimeout(() => {
+              uni.reLaunch({ url: '/pages/login/login' })
+            }, 0)
+          }
+        }
+        reject(err)
       }
-    }, 500)
+    })
   })
 }
 
@@ -130,6 +246,37 @@ export function put(url, data) {
   return request(url, { method: 'PUT', data })
 }
 
-export function del(url) {
-  return request(url, { method: 'DELETE' })
+export function del(url, params) {
+  return request(url, { method: 'DELETE', data: params })
+}
+
+// 专门用于车辆相关操作的函数（自动处理字段转换）
+export function getVehicleList() {
+  return get('/car/app/vehicle/list')
+}
+
+export function getVehicle(id) {
+  return get('/car/app/vehicle/get', { id })
+}
+
+export function createVehicle(vehicle) {
+  return post('/car/app/vehicle/create', vehicle)
+}
+
+export function updateVehicle(vehicle) {
+  return put('/car/app/vehicle/update', vehicle)
+}
+
+export function deleteVehicle(id) {
+  return del('/car/app/vehicle/delete', { id })
+}
+
+// 全局登录检查函数
+export function checkLoginAndRedirect() {
+  const hasToken = !!getToken()
+  if (!hasToken) {
+    uni.reLaunch({ url: '/pages/login/login' })
+    return false
+  }
+  return true
 }
